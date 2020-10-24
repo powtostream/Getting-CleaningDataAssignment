@@ -40,6 +40,5 @@ set <- bind_cols(n = seq_along(subject_id), id = subject_id, activity = label, s
 set[4:69] <- sapply(set[4:69], as.numeric)
 set1 <- group_by(set, activity, id)
 set1 <- summarise_at(set1, names(set1)[4:69], mean)
-
-write.csv(set, 'tidy_dataset1.csv')
-write.csv(set1, 'tidy_dataset2.csv')
+setwd('..')
+write.table(set1, 'tidy_dataset2.txt', row.names = FALSE)
