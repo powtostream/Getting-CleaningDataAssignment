@@ -1,0 +1,45 @@
+download.file('https://d396qusza40orc.cloudfront.net/getdata%2Fprojectfiles%2FUCI%20HAR%20Dataset.zip', 'data.zip')
+unzip('data.zip')
+list.files()
+setwd("./UCI HAR Dataset")
+list.files()
+features <- readLines('features.txt')
+act_labels <- readLines('activity_labels.txt')
+mean_std <- grep("mean\\(|std", features)
+mean_std_names <- features[mean_std]
+library(stringr)
+mean_std_names <- str_trim(sub('[0-9]{1,3}', '', mean_std_names))
+mean_std_names <- sub('mean\\(\\)', 'MEAN', mean_std_names)
+mean_std_names <- sub('std\\(\\)', 'STD', mean_std_names)
+act_labels <- str_trim(sub('[0-9]', '', act_labels))
+library(plyr)
+library(dplyr)
+
+list.files('./test')
+subject_id_test <- readLines("test/subject_test.txt")
+test_set <- readLines('test/X_test.txt')
+test_labels <- readLines('test/y_test.txt')
+list.files('./train')
+subject_id_train <- readLines("train/subject_train.txt")
+train_set <- readLines('train/X_train.txt')
+train_labels <- readLines('train/y_train.txt')
+set <- c(train_set, test_set)
+subject_id <- c(subject_id_train, subject_id_test)
+label <- c(train_labels, test_labels)
+
+set <- strsplit(set, ' ')
+set <- lapply(set, function(x){
+    x <- (x[x != ""])[mean_std]
+})
+
+set <- do.call(rbind.data.frame, set)
+names(set) <- mean_std_names
+label <- as.factor(label)
+label <- mapvalues(label, levels(label), act_labels)
+set <- bind_cols(n = seq_along(subject_id), id = subject_id, activity = label, set)
+set[4:69] <- sapply(set[4:69], as.numeric)
+set1 <- group_by(set, activity, id)
+set1 <- summarise_at(set1, names(set1)[4:69], mean)
+
+write.csv(set, 'tidy_dataset1.csv')
+write.csv(set1, 'tidy_dataset2.csv')
